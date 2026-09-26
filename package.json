@@ -1,0 +1,15 @@
+{
+  "name": "stocksense",
+  "private": true,
+  "description": "StockSense: modular inventory management (Odoo hackathon problem statement)",
+  "scripts": {
+    "setup": "npm install && npm install --prefix server && npm install --prefix client && node -e \"const fs=require('fs');if(!fs.existsSync('server/.env')){fs.copyFileSync('server/.env.example','server/.env');console.log('Created server/.env from .env.example')}\"",
+    "db:reset": "npm run db:reset --prefix server",
+    "dev": "concurrently -k -n api,web -c magenta,cyan \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "test": "npm test --prefix server",
+    "build": "npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
