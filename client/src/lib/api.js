@@ -1,6 +1,7 @@
 // Tiny fetch wrapper: adds the token, parses JSON, and turns API errors into
 // ApiError objects that carry field-level messages for forms.
 const TOKEN_KEY = 'stocksense.token';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiError extends Error {
   constructor(status, message, fields) {
@@ -27,9 +28,9 @@ async function request(method, path, body) {
 
   let res;
   try {
-    res = await fetch(`/api${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    res = await fetch(`${API_BASE}${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
   } catch {
-    throw new ApiError(0, 'Cannot reach the server. Is the API running on port 4000?');
+    throw new ApiError(0, 'Cannot reach the server.');
   }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
