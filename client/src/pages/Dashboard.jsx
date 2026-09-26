@@ -41,7 +41,7 @@ function StockFlow({ d }) {
         <FlowEdge to="/operations/receipts?status=open" count={k.pending_receipts} late={d.pending.receipt.late} label="Pending receipts" tone="teal" />
         <FlowNode title="On hand" strong>
           <p className="num mt-1 text-[30px] font-semibold leading-tight tracking-[-0.02em]">{k.in_stock}<span className="text-[16px] font-normal text-white/60"> of {k.total_products} products</span></p>
-          <p className="num mt-0.5 text-[14px] text-white/70">{fmtMoney(k.stock_value)} stock value</p>
+          <p className="mt-0.5 text-[14px] text-white/70">{fmtMoney(k.stock_value)} stock value</p>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-white/12 pt-3 text-[13.5px]">
             <Link to="/operations/transfers?status=open" className="text-white/80 hover:text-white hover:underline">
               <span className="num font-semibold text-white">{k.scheduled_transfers}</span> {k.scheduled_transfers === 1 ? 'transfer' : 'transfers'} scheduled
@@ -118,6 +118,51 @@ function LowStock({ items, warehouseId, onDone }) {
               </li>
             );
           })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+const FLOW_TYPES = [
+  { type: 'receipt', label: 'Receipts', tone: 'teal' },
+  { type: 'delivery', label: 'Deliveries', tone: 'brick' },
+  { type: 'internal', label: 'Transfers', tone: 'sky' },
+  { type: 'adjustment', label: 'Adjustments', tone: 'plum' },
+];
+const BAR_CLS = { teal: 'bg-teal', brick: 'bg-brick', sky: 'bg-sky', plum: 'bg-plum' };
+const TEXT_CLS = { teal: 'text-teal', brick: 'text-brick', sky: 'text-sky', plum: 'text-plum' };
+
+function Last7Days({ data }) {
+  const rows = FLOW_TYPES.map((f) => ({ ...f, ...(data?.[f.type] ?? { qty: 0, operations: 0 }) }));
+  const max = Math.max(1, ...rows.map((r) => r.qty));
+  const empty = rows.every((r) => r.qty === 0);
+  return (
+    <section className="card">
+      <div className="border-b border-line px-5 py-3.5">
+        <h2 className="font-semibold">Last 7 days</h2>
+      </div>
+      {empty ? (
+        <EmptyState icon={PackageSearch} title="No stock movement yet">Moves from the last 7 days will show up here.</EmptyState>
+      ) : (
+        <ul className="space-y-3.5 px-5 py-4">
+          {rows.map((r) => (
+            <li key={r.type}>
+              <div className="mb-1 flex items-baseline justify-between text-[13.5px]">
+                <span className="text-ink-2">{r.label}</span>
+                <span className="num text-ink-2">
+                  <span className={`font-semibold ${TEXT_CLS[r.tone]}`}>{fmtQty(r.qty)}</span>{' '}
+                  · {r.operations} {r.operations === 1 ? 'op' : 'ops'}
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-canvas">
+                <div
+                  className={`h-full rounded-full ${BAR_CLS[r.tone]}`}
+                  style={{ width: `${r.qty > 0 ? Math.max((r.qty / max) * 100, 4) : 0}%` }}
+                />
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </section>
@@ -201,7 +246,10 @@ export default function Dashboard() {
         <div className="space-y-6">
           <StockFlow d={data} />
           <div className="grid gap-6 xl:grid-cols-[1fr_1.55fr]">
-            <LowStock items={data.low_stock} warehouseId={warehouseId} onDone={reload} />
+            <div className="space-y-6">
+              <LowStock items={data.low_stock} warehouseId={warehouseId} onDone={reload} />
+              <Last7Days data={data.last7days} />
+            </div>
             <OperationsPanel warehouseId={warehouseId} categoryId={categoryId} />
           </div>
         </div>
