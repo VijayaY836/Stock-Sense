@@ -13,7 +13,15 @@ import reportRoutes from './routes/reports.js';
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  app.use(cors({ origin: config.clientOrigin }));
+  const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
   app.use(express.json({ limit: '200kb' }));
   if (!config.isTest) app.use(morgan('dev'));
 
